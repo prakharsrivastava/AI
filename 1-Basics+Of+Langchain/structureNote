@@ -1,0 +1,135 @@
+
+
+
+Loader
+from langchain_community.document_loaders import WebBaseLoader
+loader=WebBaseLoader("https://docs.smith.langchain.com/tutorials/Administrators/manage_spend")
+docs=loader.load() —— [Document(page_content= , metadata=]
+Or
+from langchain_community.document_loaders import TextLoader
+loader=TextLoader('speech.txt')
+text_documents=loader.load()—— [Document(page_content= , metadata=]
+Or
+from langchain_community.document_loaders import ArxivLoader
+docs = ArxivLoader(query="1706.03762", load_max_docs=2).load()—— [Document(page_content= , metadata=]
+len(docs)
+Or
+from langchain_community.document_loaders import WikipediaLoader
+docs = WikipediaLoader(query="Generative AI", load_max_docs=2).load()—— [Document(page_content= , metadata=]
+Or
+from langchain_community.document_loaders import PyPDFLoader
+loader=PyPDFLoader('attention.pdf')
+docs=loader.load()—— [Document(page_content= , metadata=]
+
+
+
+Recursive text splitter
+List[Document] / List[str]
+↓ 
+Splitter 
+↓
+ List[Document]
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+documents=text_splitter.split_documents(docs)—lists of document
+Or
+text=text_splitter.create_documents([speech]) — here it is text file
+
+
+Embeddings
+from langchain_openai import OpenAIEmbeddings
+embeddings=OpenAIEmbeddings()
+
+
+Vector store 
+from langchain_community.vectorstores import FAISS
+vectorstoredb=FAISS.from_documents(documents,embeddings)
+
+Retriver
+query="LangSmith has two usage limits: total traces and extended"
+result=vectorstoredb.similarity_search(query) — List[Document]
+Or
+retriever=vectorstoredb.as_retriever()—— List[Document]
+docs = retriever.invoke(query). — List[Document]
+
+Converse
+from langchain_core.prompts import ChatPromptTemplate
+
+prompt=ChatPromptTemplate.from_messages(
+    [
+        ("system","You are an expert AI Engineer. Provide me answers based on the questions"),
+        ("user","{input}")
+    ]
+
+)
+
+
+Llm creation
+from langchain_openai import ChatOpenAI
+llm=ChatOpenAI(model="gpt-4o")
+
+Output parser
+from langchain_core.output_parsers import StrOutputParser
+
+
+Chaining
+Retrieved Doc 1 ─┐
+ Retrieved Doc 2 ─┼─> put into context 
+Retrieved Doc 3 ─┘ 
++ 
+Question
+ ↓ 
+Prompt 
+↓ 
+LLM
+
+chain=prompt|llm.   Or     chain=prompt|llm|output_parser
+document_chain=create_stuff_documents_chain(llm,prompt) -----RunnableBinding(bound=RunnableAssign(mapper={)
+from langchain.chains import create_retrieval_chain
+retrieval_chain=create_retrieval_chain(retriever,document_chain)——gives output as RunnableBinding(bound=RunnableAssign(mapper={)
+
+chain=document_chain -> retrieval_chain
+
+Invoke
+result=llm.invoke("What is generative AI?")
+response=chain.invoke({"input":"Can you tell me about Langsmith?”})—AIMessage
+
+
+
+
+
+State class
+from typing_extensions import TypedDict
+class State(TypedDict):
+    graph_info:str
+
+Create graph
+from IPython.display import Image,display
+from langgraph.graph import StateGraph,START,END
+
+graph=StateGraph(State)
+
+Add node
+graph.add_node("start_play",start_play)
+
+Add Conditional Edge
+graph.add_conditional_edges("start_play",random_play)
+
+
+Conditional Function
+def random_play(state:State)-> Literal['cricket','badminton']:
+    graph_info=state['graph_info']
+
+    if random.random()>0.5:
+        return "cricket"
+    else:
+        return "badminton"
+
+
+Compile
+graph_builder=graph.compile()
+
+Display graph
+display(Image(graph_builder.get_graph().draw_mermaid_png()))
+

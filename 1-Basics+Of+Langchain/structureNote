@@ -115,6 +115,7 @@ State class
 from typing_extensions import TypedDict
 class State(TypedDict):
     graph_info:str
+    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 Create graph
 from IPython.display import Image,display

@@ -91,6 +91,18 @@ retrieval_chain=create_retrieval_chain(retriever,document_chain)——gives outp
 
 chain=document_chain -> retrieval_chain
 
+or 
+
+retrieverlangchain==FAISS.from_documents(
+    documents=doc_splits,
+    embedding=OpenAIEmbeddings()
+).as_retriever()
+retriever_tool_langchain=create_retriever_tool(
+    retrieverlangchain,
+    "retriever_vector_langchain_blog",
+    "Search and run information about Langchain"
+)
+
 Invoke
 result=llm.invoke("What is generative AI?")
 response=chain.invoke({"input":"Can you tell me about Langsmith?”})—AIMessage
